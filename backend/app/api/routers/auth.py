@@ -1,0 +1,48 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.models.enums import UserRole
+from app.models.models import User
+from app.schemas.auth import AdminLoginRequest, ChangePasswordIn, ParentLoginRequest, TokenResponse
+from app.security import create_access_token, verify_password
+from app.api.deps import get_current_user
+from app.services.users import change_password_self
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.post("/login-parent", response_model=TokenResponse)
+def login_parent(payload: ParentLoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
+    user = db.query(User).filter(User.matricule == payload.matricule).first()
+    if not user or user.role != UserRole.PARENT or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Matricule ou mot de passe incorrect.")
+    if not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Matricule ou mot de passe incorrect.")
+    token = create_access_token(subject=str(user.id), role=user.role.value)
+    return TokenResponse(access_token=token)
+
+
+@router.post("/login-admin", response_model=TokenResponse)
+def login_admin(payload: AdminLoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user or user.role not in {UserRole.GESTIONNAIRE, UserRole.SUPER_ADMIN} or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email ou mot de passe incorrect.")
+    if not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email ou mot de passe incorrect.")
+    token = create_access_token(subject=str(user.id), role=user.role.value)
+    return TokenResponse(access_token=token)
+
+
+@router.post("/change-password")
+def change_password(
+    payload: ChangePasswordIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> dict[str, bool]:
+    change_password_self(db, user=user, old_password=payload.old_password, new_password=payload.new_password)
+    db.commit()
+    return {"ok": True}
+

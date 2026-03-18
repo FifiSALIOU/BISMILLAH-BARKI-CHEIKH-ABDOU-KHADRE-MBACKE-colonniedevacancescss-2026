@@ -1,0 +1,50 @@
+from __future__ import annotations
+
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr, Field
+
+from app.models.enums import UserRole
+
+
+class UserOut(BaseModel):
+    id: int
+    name: str
+    role: UserRole
+    is_active: bool
+    email: Optional[str] = None
+    matricule: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminUserCreateIn(BaseModel):
+    role: UserRole
+    name: str = Field(min_length=1, max_length=255)
+    email: Optional[EmailStr] = None
+    matricule: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    password: str = Field(min_length=8, max_length=255)
+
+
+class ParentUserCreateIn(BaseModel):
+    role: UserRole = UserRole.PARENT
+    name: str = Field(min_length=1, max_length=255)
+    email: Optional[EmailStr] = None
+    matricule: str = Field(min_length=1, max_length=50)
+    prenom: str = Field(min_length=1, max_length=255)
+    nom: str = Field(min_length=1, max_length=255)
+    service: str = Field(min_length=1, max_length=255)
+    site_code: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    password: str = Field(min_length=8, max_length=255)
+
+
+class UserUpsertIn(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    is_active: Optional[bool] = None
+    email: Optional[EmailStr] = None
+
+
+class ResetPasswordIn(BaseModel):
+    new_password: str = Field(min_length=8, max_length=255)
+
