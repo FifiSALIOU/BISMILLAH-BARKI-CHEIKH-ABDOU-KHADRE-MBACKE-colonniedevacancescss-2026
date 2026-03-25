@@ -1,0 +1,5 @@
+backend/.env
+colonie-joyeuse/.env
+colonie-joyeuse/node_modules/
+colonie-joyeuse/dist/
+colonie-joyeuse/.vite/

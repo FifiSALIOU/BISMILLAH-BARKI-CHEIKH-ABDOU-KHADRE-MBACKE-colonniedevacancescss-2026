@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.enums import UserRole
-from app.models.models import User
+from app.models.models import Parent, User
 from app.schemas.auth import AdminLoginRequest, ChangePasswordIn, ParentLoginRequest, TokenResponse
 from app.security import create_access_token, verify_password
 from app.api.deps import get_current_user
@@ -45,4 +45,27 @@ def change_password(
     change_password_self(db, user=user, old_password=payload.old_password, new_password=payload.new_password)
     db.commit()
     return {"ok": True}
+
+
+@router.get("/me")
+def me(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    payload = {
+        "id": user.id,
+        "role": user.role.value,
+        "name": user.name,
+        "email": user.email,
+        "matricule": user.matricule,
+    }
+    if user.role == UserRole.PARENT:
+        parent = db.query(Parent).filter(Parent.user_id == user.id).first()
+        payload["parent"] = {
+            "prenom": parent.prenom if parent else None,
+            "nom": parent.nom if parent else None,
+            "matricule": parent.matricule if parent else user.matricule,
+            "service": parent.service.nom if parent and parent.service else None,
+        }
+    return payload
 
