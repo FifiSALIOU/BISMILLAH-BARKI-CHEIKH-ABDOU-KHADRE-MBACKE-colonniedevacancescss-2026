@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { useInscription } from '@/contexts/InscriptionContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,14 +10,15 @@ import logo from '@/assets/logo.png';
 
 export default function ForcePasswordChange() {
   const { pendingParent, setAuthStep, setPendingParent } = useAuth();
-  const { updateParent } = useInscription();
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
   const [errorOpen, setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successOpen, setSuccessOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || 'http://127.0.0.1:8000';
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!newPwd || !confirmPwd) {
       setErrorMessage('Veuillez remplir tous les champs.');
       setErrorOpen(true);
@@ -34,10 +34,40 @@ export default function ForcePasswordChange() {
       setErrorOpen(true);
       return;
     }
-    if (pendingParent) {
-      updateParent(pendingParent.matricule, { motDePasse: newPwd, premiereConnexion: false });
+    const pendingToken = sessionStorage.getItem('pending_access_token');
+    if (!pendingToken) {
+      setErrorMessage("Session expirée. Veuillez vous reconnecter.");
+      setErrorOpen(true);
+      setAuthStep('logged_out');
+      return;
     }
-    setSuccessOpen(true);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${pendingToken}`,
+        },
+        body: JSON.stringify({
+          old_password: 'Passer123',
+          new_password: newPwd,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setErrorMessage(data?.detail || 'Impossible de changer le mot de passe.');
+        setErrorOpen(true);
+        return;
+      }
+      sessionStorage.removeItem('pending_access_token');
+      setSuccessOpen(true);
+    } catch {
+      setErrorMessage("Impossible de joindre l'API. Vérifiez que le backend est démarré.");
+      setErrorOpen(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSuccessClose = () => {
@@ -81,7 +111,7 @@ export default function ForcePasswordChange() {
                 <Input type="password" placeholder="Confirmez le mot de passe" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubmit()} className="pl-10 h-12 rounded-lg" />
               </div>
             </div>
-            <Button onClick={handleSubmit} className="w-full h-12 rounded-lg bg-brand-navy text-primary-foreground hover:bg-brand-navy/90 font-semibold">
+            <Button disabled={isSubmitting} onClick={() => void handleSubmit()} className="w-full h-12 rounded-lg bg-brand-navy text-primary-foreground hover:bg-brand-navy/90 font-semibold">
               Définir mon mot de passe
             </Button>
           </div>

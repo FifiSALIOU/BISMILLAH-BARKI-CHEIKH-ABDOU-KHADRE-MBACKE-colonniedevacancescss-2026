@@ -14,7 +14,7 @@ type BackendRole = 'GESTIONNAIRE' | 'SUPER_ADMIN';
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || 'http://127.0.0.1:8000';
 
 export default function LoginPage() {
-  const { loginAsParent, loginAsAdmin, setAuthStep } = useAuth();
+  const { loginAsParent, loginAsAdmin, setAuthStep, setPendingParent } = useAuth();
   const { settings } = useInscription();
   const [mode, setMode] = useState<LoginMode>('select');
   const [matricule, setMatricule] = useState('');
@@ -94,6 +94,21 @@ export default function LoginPage() {
       });
       const meData = await meResponse.json().catch(() => ({}));
       const parentProfile = meData?.parent || {};
+      if (data.must_change_password) {
+        sessionStorage.setItem('pending_access_token', data.access_token);
+        localStorage.removeItem('access_token');
+        setPendingParent({
+          matricule: parentProfile.matricule || trimmed,
+          prenom: parentProfile.prenom || '',
+          nom: parentProfile.nom || '',
+          service: parentProfile.service || '',
+          motDePasse: '',
+          premiereConnexion: true,
+        });
+        setAuthStep('force_password_change');
+        return;
+      }
+
       loginAsParent({
         matricule: parentProfile.matricule || trimmed,
         prenom: parentProfile.prenom || '',
