@@ -35,7 +35,6 @@ export default function GestionUtilisateurs() {
   const [newParentPrenom, setNewParentPrenom] = useState('');
   const [newParentNom, setNewParentNom] = useState('');
   const [newParentService, setNewParentService] = useState('');
-  const [newParentPassword, setNewParentPassword] = useState('parent123');
   const [newParentEmail, setNewParentEmail] = useState('');
   const [newParentTelephone, setNewParentTelephone] = useState('');
   const [newParentSite, setNewParentSite] = useState('');
@@ -310,7 +309,7 @@ export default function GestionUtilisateurs() {
   };
 
   const handleCreateParent = () => {
-    if (!newParentMatricule || !newParentPrenom || !newParentNom || !newParentService) return;
+    if (!newParentMatricule || !newParentPrenom || !newParentNom || !newParentService || !newParentTelephone) return;
     const token = getToken();
     if (!token) return;
     void (async () => {
@@ -329,7 +328,7 @@ export default function GestionUtilisateurs() {
           service: newParentService,
           site_code: newParentSite || undefined,
           email: newParentEmail || undefined,
-          password: newParentPassword || 'Passer123',
+          password: 'Passer123',
         }),
       });
       if (!response.ok) {
@@ -339,7 +338,7 @@ export default function GestionUtilisateurs() {
       }
       await fetchParents();
       setCreateParentOpen(false);
-      setNewParentMatricule(''); setNewParentPrenom(''); setNewParentNom(''); setNewParentService(''); setNewParentPassword('parent123'); setNewParentEmail(''); setNewParentTelephone(''); setNewParentSite('');
+      setNewParentMatricule(''); setNewParentPrenom(''); setNewParentNom(''); setNewParentService(''); setNewParentEmail(''); setNewParentTelephone(''); setNewParentSite('');
       toast({ title: '✅ Parent créé' });
     })();
   };
@@ -660,9 +659,11 @@ export default function GestionUtilisateurs() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Email</Label><Input value={newParentEmail} onChange={e => setNewParentEmail(e.target.value)} type="email" className="rounded-lg" /></div>
-              <div className="space-y-2"><Label>Téléphone</Label><Input value={newParentTelephone} onChange={e => setNewParentTelephone(e.target.value)} className="rounded-lg" /></div>
+              <div className="space-y-2"><Label>Téléphone *</Label><Input value={newParentTelephone} onChange={e => setNewParentTelephone(e.target.value)} className="rounded-lg" /></div>
             </div>
-            <div className="space-y-2"><Label>Mot de passe</Label><Input value={newParentPassword} onChange={e => setNewParentPassword(e.target.value)} type="password" className="rounded-lg" /></div>
+            <p className="text-xs text-muted-foreground">
+              Le mot de passe par défaut est <strong>Passer123</strong>. Le parent devra le changer à sa première connexion.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateParentOpen(false)} className="rounded-lg">Annuler</Button>
