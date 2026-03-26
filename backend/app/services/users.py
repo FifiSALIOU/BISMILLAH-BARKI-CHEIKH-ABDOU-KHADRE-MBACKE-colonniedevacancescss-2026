@@ -22,17 +22,32 @@ def _get_or_create_service(db: Session, nom: str) -> Service:
 
 
 def _get_or_create_site(db: Session, site_code: str) -> Optional[Site]:
-    # Pour rester flexible : si site_code est fourni mais qu’on ne connaît pas le nom,
-    # on crée un site avec un nom identique au code.
     if not site_code:
         return None
-    s = db.query(Site).filter(Site.code == site_code).first()
-    if s:
-        return s
-    s = Site(nom=site_code, code=site_code, description=None)
-    db.add(s)
-    db.flush()
-    return s
+    value = site_code.strip()
+    if not value:
+        return None
+
+    # 1) Priorité au code exact
+    by_code = db.query(Site).filter(Site.code == value).first()
+    if by_code:
+        return by_code
+
+    # 2) Sinon, on accepte aussi le nom exact (insensible à la casse)
+    by_name = db.query(Site).filter(func.lower(Site.nom) == value.lower()).all()
+    if len(by_name) == 1:
+        return by_name[0]
+    if len(by_name) > 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Agence ambiguë '{value}' : plusieurs sites portent ce nom.",
+        )
+
+    # 3) On ne crée jamais un site automatiquement ici pour éviter les doublons
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=f"Agence introuvable '{value}'. Utilisez un code ou un nom existant.",
+    )
 
 
 def create_user_superadmin(
