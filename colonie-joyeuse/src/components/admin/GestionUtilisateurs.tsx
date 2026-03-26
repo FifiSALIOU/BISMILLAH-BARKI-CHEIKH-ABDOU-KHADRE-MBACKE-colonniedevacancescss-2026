@@ -672,7 +672,7 @@ export default function GestionUtilisateurs() {
               <Label>Site *</Label>
               <Select value={newParentSite} onValueChange={setNewParentSite}>
                 <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner un site" /></SelectTrigger>
-                <SelectContent>
+                <SelectContent side="bottom" align="start" position="popper" className="max-h-64">
                   {sites.map(s => (
                     <SelectItem key={s.id} value={s.code}>{s.nom}</SelectItem>
                   ))}
@@ -710,7 +710,7 @@ export default function GestionUtilisateurs() {
                 <Label>Site</Label>
                 <Select value={editingParent.site || ''} onValueChange={v => setEditingParent({ ...editingParent, site: v })}>
                   <SelectTrigger className="rounded-lg"><SelectValue placeholder="Sélectionner un site" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent side="bottom" align="start" position="popper" className="max-h-64">
                     {sites.map(s => (
                       <SelectItem key={s.id} value={s.code}>{s.nom}</SelectItem>
                     ))}
