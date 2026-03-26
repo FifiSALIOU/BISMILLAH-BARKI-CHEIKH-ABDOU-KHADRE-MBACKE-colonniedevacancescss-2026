@@ -231,6 +231,7 @@ export default function GestionUtilisateurs() {
       body: JSON.stringify({
         name: `${editingAdmin.prenom} ${editingAdmin.nom}`.trim(),
         email: editingAdmin.email,
+        role: editingAdmin.role === 'super_admin' ? 'SUPER_ADMIN' : 'GESTIONNAIRE',
       }),
     });
     if (!response.ok) {

@@ -43,6 +43,7 @@ class UserUpsertIn(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=255)
     is_active: Optional[bool] = None
     email: Optional[EmailStr] = None
+    role: Optional[UserRole] = None
 
 
 class ResetPasswordIn(BaseModel):

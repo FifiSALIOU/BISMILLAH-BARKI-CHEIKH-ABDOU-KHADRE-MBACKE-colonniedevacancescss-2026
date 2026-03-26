@@ -137,6 +137,7 @@ def update_user(
     name: Optional[str],
     is_active: Optional[bool],
     email: Optional[str],
+    role: Optional[UserRole],
 ) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -147,6 +148,10 @@ def update_user(
         user.is_active = is_active
     if email is not None:
         user.email = email
+    if role is not None:
+        if role not in {UserRole.GESTIONNAIRE, UserRole.SUPER_ADMIN}:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Rôle invalide pour un administrateur.")
+        user.role = role
     db.flush()
     return user
 

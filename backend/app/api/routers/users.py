@@ -145,6 +145,7 @@ def upsert_user(
         name=payload.name,
         is_active=payload.is_active,
         email=payload.email,
+        role=payload.role,
     )
     db.commit()
     db.refresh(user)
